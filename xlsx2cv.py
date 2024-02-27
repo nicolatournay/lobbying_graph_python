@@ -23,7 +23,25 @@ for index, row in df_original.iterrows():
         }
         df_final = df_final._append(new_row, ignore_index=True)
 
+# Charger le fichier interest.xls dans un dataframe df_interest
+df_interest = pd.read_excel("interest.xls")
 
+# Ajouter les nouvelles colonnes à df_final en effectuant une jointure interne avec df_interest
+df_final = df_final.merge(df_interest[["Identification code", "Name", "Acronym", "Category of registration", "Website URL", "Closed year EU grant: amount (source)", "Current year EU grant: source (amount)"]],
+                            left_on="Interest_ID",
+                            right_on="Identification code",
+                            how="inner")
+
+# Renommer les colonnes ajoutées
+df_final = df_final.rename(columns={"Name": "Interest_Name",
+                                    "Acronym": "Interest_Acronym",
+                                    "Category of registration": "Interest_Category",
+                                    "Website URL": "Interest_URL",
+                                    "Closed year EU grant: amount (source)": "Closed_year_EU_grant",
+                                    "Current year EU grant: source (amount)": "Current_year_EU_grant"})
+
+# Supprimer la colonne "Identification code" qui n'est plus nécessaire
+df_final = df_final.drop(columns="Identification code")
 
 # Exporter df_final au format CSV avec un point-virgule comme séparateur
-df_final.to_csv("commission_meetings.csv", sep=";", encoding="utf-8", index=False)
+df_final.to_csv("commission_meetings_with_interests.csv", sep=";", encoding="utf-8", index=False)
