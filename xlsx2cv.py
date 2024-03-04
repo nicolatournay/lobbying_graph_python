@@ -43,5 +43,20 @@ df_final = df_final.rename(columns={"Name": "Interest_Name",
 # Supprimer la colonne "Identification code" qui n'est plus nécessaire
 df_final = df_final.drop(columns="Identification code")
 
+# Importer le fichier import.xls dans un dataframe df_import
+df_import = pd.read_excel("export.xls", skiprows=1)
+
+# Itérer à travers la colonne "Interest_Name" de df_final
+for index, row in df_final.iterrows():
+    # Vérifier si l'entrée "Interest_Name" est vide
+    if pd.isnull(row["Interest_Name"]):
+        # Rechercher l'entrée "Identification number" correspondant à l'entrée "Interest_ID" dans df_import
+        match = df_import[df_import["Identification number"] == row["Interest_ID"]]
+        if not match.empty:
+            # Copier le contenu de l'entrée "(Organisation) name" dans l'entrée "Interest_Name" de df_final
+            df_final.at[index, "Interest_Name"] = match.iloc[0]["(Organisation) name"]
+            # Copier le contenu de l'entrée "Category of registration" dans l'entrée "Interest_Category" de df_final
+            df_final.at[index, "Interest_Category"] = match.iloc[0]["Category of registration"]
+
 # Exporter df_final au format CSV avec un point-virgule comme séparateur
-df_final.to_csv("commission_meetings_with_interests.csv", sep=";", encoding="utf-8", index=False)
+df_final.to_csv("edges.csv", sep=";", encoding="utf-8", index=False)
