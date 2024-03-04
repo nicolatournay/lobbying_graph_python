@@ -30,7 +30,7 @@ df_interest = pd.read_excel("interest.xls")
 df_final = df_final.merge(df_interest[["Identification code", "Name", "Acronym", "Category of registration", "Website URL", "Closed year EU grant: amount (source)", "Current year EU grant: source (amount)"]],
                             left_on="Interest_ID",
                             right_on="Identification code",
-                            how="inner")
+                            how="left")
 
 # Renommer les colonnes ajoutées
 df_final = df_final.rename(columns={"Name": "Interest_Name",
@@ -43,5 +43,25 @@ df_final = df_final.rename(columns={"Name": "Interest_Name",
 # Supprimer la colonne "Identification code" qui n'est plus nécessaire
 df_final = df_final.drop(columns="Identification code")
 
+for index, row in df_final.iterrows():
+    # Vérifier si la colonne "Name" est vide
+    if pd.isna(row["Interest_Name"]):
+        # Essayer de trouver les informations dans les fichiers annuels
+        found = False
+        for year in range(2023, 2018, -1):  # De 2023 à 2019
+            try:
+                df_yearly = pd.read_excel(f"interest_{year}.xls")
+                match_row = df_yearly[df_yearly["Identification code"] == row["Interest_ID"]].iloc[0]
+                df_final.at[index, ["Interest_Name", "Interest_Acronym", "Interest_Category", "Interest_URL", "Closed_year_EU_grant", "Current_year_EU_grant"]] = match_row[["Name", "Acronym", "Category of registration", "Website URL", "Closed year EU grant: amount (source)", "Current year EU grant: source (amount)"]]
+                found = True
+                break
+            except (FileNotFoundError, IndexError):
+                # Fichier non trouvé ou aucune correspondance, passer à l'année suivante
+                continue
+        
+        if not found:
+            print(f"No match found for Interest_ID {row['Interest_ID']} in any year from 2019 to 2023.")
+
+
 # Exporter df_final au format CSV avec un point-virgule comme séparateur
-df_final.to_csv("commission_meetings_with_interests.csv", sep=";", encoding="utf-8", index=False)
+df_final.to_csv("edges.csv", sep=";", encoding="utf-8", index=False)
